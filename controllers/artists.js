@@ -1,19 +1,33 @@
 // Controller for the "artists" collection.
 // All handlers access the database through getDatabase() (see data/database.js)
 // and delegate any thrown error to the central error handler via next(err).
+// Documents store "createdBy" (id of the user that created them) so routes
+// can check ownership.
 
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
 const COLLECTION = 'artists';
 // Fields a client may update (whitelist to avoid mass assignment).
-const ALLOWED_FIELDS = ['name', 'bio', 'nationality', 'birthYear', 'deathYear'];
+const ALLOWED_FIELDS = [
+  'firstName',
+  'middleName',
+  'lastName',
+  'birthDate',
+  'deathDate',
+  'country',
+  'locality',
+];
 
-/** Returns every artist in the collection. */
+/** Returns every artist; supports the optional ?country= filter. */
 async function getAllArtists(req, res, next) {
   try {
     const db = getDatabase();
-    const artists = await db.collection(COLLECTION).find().toArray();
+    const query = {};
+    if (req.query.country) {
+      query.country = req.query.country;
+    }
+    const artists = await db.collection(COLLECTION).find(query).toArray();
     res.status(200).json(artists);
   } catch (err) {
     next(err);
@@ -41,13 +55,15 @@ async function createArtist(req, res, next) {
   try {
     const db = getDatabase();
     const artist = {
-      name: req.body.name,
-      bio: req.body.bio || null,
-      nationality: req.body.nationality || null,
-      birthYear: req.body.birthYear || null,
-      deathYear: req.body.deathYear || null,
+      firstName: req.body.firstName,
+      middleName: req.body.middleName || null,
+      lastName: req.body.lastName,
+      birthDate: new Date(req.body.birthDate),
+      deathDate: req.body.deathDate ? new Date(req.body.deathDate) : null,
+      country: req.body.country,
+      locality: req.body.locality || null,
+      createdBy: req.user._id,
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
     const result = await db.collection(COLLECTION).insertOne(artist);
     const created = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
@@ -61,10 +77,14 @@ async function createArtist(req, res, next) {
 async function updateArtist(req, res, next) {
   try {
     const db = getDatabase();
-    const updatedFields = { updatedAt: new Date() };
+    const updatedFields = {};
     ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
-        updatedFields[field] = req.body[field];
+        // Date fields must be converted back into Date objects for the DB.
+        updatedFields[field] =
+          (field === 'birthDate' || field === 'deathDate') && req.body[field]
+            ? new Date(req.body[field])
+            : req.body[field];
       }
     });
     const result = await db.collection(COLLECTION).updateOne(
@@ -83,13 +103,22 @@ async function updateArtist(req, res, next) {
   }
 }
 
-/** Deletes an artist by id; 204 on success and 404 when there is no match. */
+/**
+ * Deletes an artist by id.
+ * Returns 409 if the artist still has artworks (to avoid orphan records).
+ * 204 on success and 404 when there is no match.
+ */
 async function deleteArtist(req, res, next) {
   try {
     const db = getDatabase();
-    const result = await db.collection(COLLECTION).deleteOne({
-      _id: new ObjectId(req.params.id),
-    });
+    const id = new ObjectId(req.params.id);
+    const artworkCount = await db.collection('artworks').countDocuments({ artistId: id });
+    if (artworkCount > 0) {
+      return res
+        .status(409)
+        .json({ message: 'Cannot delete an artist that still has artworks' });
+    }
+    const result = await db.collection(COLLECTION).deleteOne({ _id: id });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'Artist not found' });
     }

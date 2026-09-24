@@ -2,22 +2,34 @@
 // The database module is mocked so the tests run without a live MongoDB.
 // The API is exported from server.js as an Express app (no port is opened).
 
+// Making the tests deterministic: the app imports dotenv before anything else,
+// so each test file can set NODE_ENV before requiring the app. In test mode
+// server.js skips sessions/passport, which keeps these tests free of OAuth.
 process.env.NODE_ENV = 'test';
 
 // Replace data/database with an in-memory fake before the app is loaded.
+// This lets the integration tests run without a live MongoDB cluster while
+// still exercising the real Express routing and controller logic.
 jest.mock('../data/database', () => {
   const { ObjectId } = require('mongodb');
 
   // Small in-memory fixtures returned by the mocked collection.
+  // Keys match the collection names used by the controllers.
   const data = {
-    artists: [{ _id: new ObjectId(), name: 'Test Artist' }],
-    artworks: [{ _id: new ObjectId(), title: 'Test Artwork' }],
-    keywords: [{ _id: new ObjectId(), name: 'Test Keyword' }],
-    artworkKeywords: [
+    artists: [
+      { _id: new ObjectId(), firstName: 'Test', lastName: 'Artist', country: 'Spain' },
+    ],
+    artworks: [
+      { _id: new ObjectId(), title: 'Test Artwork', period: 'Baroque', type: 'Painting' },
+    ],
+    keywords: [{ _id: new ObjectId(), keyword: 'landscape' }],
+    artwork_keywords: [
       { _id: new ObjectId(), artworkId: new ObjectId(), keywordId: new ObjectId() },
     ],
   };
 
+  // Mocked module surface. initDb resolves because server.js calls it inside a
+  // try/catch when a real connection is attempted; here it just resolves.
   return {
     initDb: jest.fn().mockResolvedValue({}),
     closeDb: jest.fn(),
@@ -53,6 +65,12 @@ describe('GET routes', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
+  test('GET /api/artists?country=Spain returns 200 with an array', async () => {
+    const res = await request(app).get('/api/artists?country=Spain');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
   test('GET /api/artworks returns 200 with an array', async () => {
     const res = await request(app).get('/api/artworks');
     expect(res.status).toBe(200);
@@ -76,9 +94,9 @@ describe('GET routes', () => {
     expect(res.status).toBe(401);
   });
 
-  test('GET /api/auth/status returns authenticated false by default', async () => {
-    const res = await request(app).get('/api/auth/status');
-    expect(res.status).toBe(200);
+  test('GET /api/auth/me returns 401 with authenticated false by default', async () => {
+    const res = await request(app).get('/api/auth/me');
+    expect(res.status).toBe(401);
     expect(res.body.authenticated).toBe(false);
   });
 

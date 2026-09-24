@@ -1,13 +1,14 @@
 // Controller for the "keywords" collection.
 // All handlers access the database through getDatabase() (see data/database.js)
 // and delegate any thrown error to the central error handler via next(err).
+// Keywords are stored in lowercase so they are easy to search and compare.
 
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
 const COLLECTION = 'keywords';
 // Fields a client may update (whitelist to avoid mass assignment).
-const ALLOWED_FIELDS = ['name', 'description'];
+const ALLOWED_FIELDS = ['keyword'];
 
 /** Returns every keyword in the collection. */
 async function getAllKeywords(req, res, next) {
@@ -36,20 +37,26 @@ async function getKeywordById(req, res, next) {
   }
 }
 
-/** Creates a new keyword and returns it with status 201. */
+/**
+ * Creates a new keyword (stored in lowercase).
+ * Returns 409 if that keyword already exists (unique).
+ */
 async function createKeyword(req, res, next) {
   try {
     const db = getDatabase();
     const keyword = {
-      name: req.body.name,
-      description: req.body.description || null,
+      keyword: req.body.keyword.trim().toLowerCase(),
+      createdBy: req.user._id,
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
     const result = await db.collection(COLLECTION).insertOne(keyword);
     const created = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
     res.status(201).json(created);
   } catch (err) {
+    // MongoDB duplicate key error (unique index on "keyword").
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'That keyword already exists' });
+    }
     next(err);
   }
 }
@@ -58,10 +65,10 @@ async function createKeyword(req, res, next) {
 async function updateKeyword(req, res, next) {
   try {
     const db = getDatabase();
-    const updatedFields = { updatedAt: new Date() };
+    const updatedFields = {};
     ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
-        updatedFields[field] = req.body[field];
+        updatedFields[field] = req.body[field].trim().toLowerCase();
       }
     });
     const result = await db.collection(COLLECTION).updateOne(
@@ -76,20 +83,27 @@ async function updateKeyword(req, res, next) {
     });
     res.status(200).json(updated);
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'That keyword already exists' });
+    }
     next(err);
   }
 }
 
-/** Deletes a keyword by id; 204 on success and 404 when there is no match. */
+/**
+ * Deletes a keyword and its links (cascade).
+ * 204 on success and 404 when there is no match.
+ */
 async function deleteKeyword(req, res, next) {
   try {
     const db = getDatabase();
-    const result = await db.collection(COLLECTION).deleteOne({
-      _id: new ObjectId(req.params.id),
-    });
+    const id = new ObjectId(req.params.id);
+    const result = await db.collection(COLLECTION).deleteOne({ _id: id });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'Keyword not found' });
     }
+    // Remove the links so no database record points to a deleted keyword.
+    await db.collection('artwork_keywords').deleteMany({ keywordId: id });
     res.status(204).send();
   } catch (err) {
     next(err);

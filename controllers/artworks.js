@@ -1,19 +1,36 @@
 // Controller for the "artworks" collection.
 // All handlers access the database through getDatabase() (see data/database.js)
 // and delegate any thrown error to the central error handler via next(err).
+// Documents store "createdBy" (id of the user that created them) so routes
+// can check ownership.
 
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
 const COLLECTION = 'artworks';
 // Fields a client may update (whitelist to avoid mass assignment).
-const ALLOWED_FIELDS = ['title', 'description', 'artistId', 'year', 'medium', 'imageUrl'];
+const ALLOWED_FIELDS = [
+  'title',
+  'year',
+  'period',
+  'type',
+  'medium',
+  'dimensions',
+  'description',
+  'file',
+  'artistId',
+];
 
-/** Returns every artwork in the collection. */
+/** Returns every artwork; supports ?period=, ?type=, ?year=, ?artistId= filters. */
 async function getAllArtworks(req, res, next) {
   try {
     const db = getDatabase();
-    const artworks = await db.collection(COLLECTION).find().toArray();
+    const query = {};
+    if (req.query.period) query.period = req.query.period;
+    if (req.query.type) query.type = req.query.type;
+    if (req.query.year) query.year = Number(req.query.year);
+    if (req.query.artistId) query.artistId = new ObjectId(req.query.artistId);
+    const artworks = await db.collection(COLLECTION).find(query).toArray();
     res.status(200).json(artworks);
   } catch (err) {
     next(err);
@@ -36,19 +53,32 @@ async function getArtworkById(req, res, next) {
   }
 }
 
-/** Creates a new artwork (artistId is stored as an ObjectId) and returns it. */
+/**
+ * Creates a new artwork. artistId must reference an existing artist
+ * (checked before saving). Returns the created artwork with status 201.
+ */
 async function createArtwork(req, res, next) {
   try {
     const db = getDatabase();
+    const artistId = new ObjectId(req.body.artistId);
+    const artist = await db.collection('artists').findOne({ _id: artistId });
+    if (!artist) {
+      return res
+        .status(400)
+        .json({ message: 'artistId does not reference an existing artist' });
+    }
     const artwork = {
       title: req.body.title,
-      description: req.body.description || null,
-      artistId: new ObjectId(req.body.artistId),
-      year: req.body.year || null,
+      year: req.body.year,
+      period: req.body.period,
+      type: req.body.type,
       medium: req.body.medium || null,
-      imageUrl: req.body.imageUrl || null,
+      dimensions: req.body.dimensions || null,
+      description: req.body.description || null,
+      file: req.body.file,
+      artistId,
+      createdBy: req.user._id,
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
     const result = await db.collection(COLLECTION).insertOne(artwork);
     const created = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
@@ -62,7 +92,7 @@ async function createArtwork(req, res, next) {
 async function updateArtwork(req, res, next) {
   try {
     const db = getDatabase();
-    const updatedFields = { updatedAt: new Date() };
+    const updatedFields = {};
     ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
         // artistId must be converted back into an ObjectId for the DB.
@@ -70,6 +100,16 @@ async function updateArtwork(req, res, next) {
           field === 'artistId' ? new ObjectId(req.body[field]) : req.body[field];
       }
     });
+    // Keep the same invariant as createArtwork: artistId must reference an
+    // existing artist.
+    if (updatedFields.artistId !== undefined) {
+      const artist = await db.collection('artists').findOne({ _id: updatedFields.artistId });
+      if (!artist) {
+        return res
+          .status(400)
+          .json({ message: 'artistId does not reference an existing artist' });
+      }
+    }
     const result = await db.collection(COLLECTION).updateOne(
       { _id: new ObjectId(req.params.id) },
       { $set: updatedFields }
@@ -86,16 +126,20 @@ async function updateArtwork(req, res, next) {
   }
 }
 
-/** Deletes an artwork by id; 204 on success and 404 when there is no match. */
+/**
+ * Deletes an artwork and its keyword links (cascade).
+ * 204 on success and 404 when there is no match.
+ */
 async function deleteArtwork(req, res, next) {
   try {
     const db = getDatabase();
-    const result = await db.collection(COLLECTION).deleteOne({
-      _id: new ObjectId(req.params.id),
-    });
+    const id = new ObjectId(req.params.id);
+    const result = await db.collection(COLLECTION).deleteOne({ _id: id });
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'Artwork not found' });
     }
+    // Remove the links so no database record points to a deleted artwork.
+    await db.collection('artwork_keywords').deleteMany({ artworkId: id });
     res.status(204).send();
   } catch (err) {
     next(err);

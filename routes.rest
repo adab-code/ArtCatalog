@@ -6,9 +6,22 @@ GET {{baseUrl}}/
 ### Swagger docs (HTML)
 GET {{baseUrl}}/api-docs/
 
+### ----- AUTH -----
+### Start GitHub OAuth login
+GET {{baseUrl}}/api/auth/github
+
+### Who am I (login state)
+GET {{baseUrl}}/api/auth/me
+
+### Logout
+GET {{baseUrl}}/api/auth/logout
+
 ### ----- ARTISTS -----
-### Get all artists
+### Get all artists (optional ?country=)
 GET {{baseUrl}}/api/artists
+
+### Get all artists from Spain
+GET {{baseUrl}}/api/artists?country=Spain
 
 ### Get one artist by id
 GET {{baseUrl}}/api/artists/6528a1b2c3d4e5f6a7b8c9d0
@@ -18,31 +31,37 @@ POST {{baseUrl}}/api/artists
 Content-Type: application/json
 
 {
-  "name": "Frida Kahlo",
-  "bio": "Mexican painter known for self-portraits.",
-  "nationality": "Mexican",
-  "birthYear": 1907,
-  "deathYear": 1954
+  "firstName": "Frida",
+  "middleName": "",
+  "lastName": "Kahlo",
+  "birthDate": "1907-07-06",
+  "deathDate": "1954-07-13",
+  "country": "Mexico",
+  "locality": "Coyoacan"
 }
 
-### Update artist (requires login)
+### Update artist (requires owner or admin)
 PUT {{baseUrl}}/api/artists/6528a1b2c3d4e5f6a7b8c9d0
 Content-Type: application/json
 
 {
-  "name": "Frida Kahlo",
-  "bio": "Mexican painter, updated bio.",
-  "nationality": "Mexican",
-  "birthYear": 1907,
-  "deathYear": 1954
+  "firstName": "Frida",
+  "lastName": "Kahlo",
+  "birthDate": "1907-07-06",
+  "deathDate": "1954-07-13",
+  "country": "Mexico",
+  "locality": "Mexico City"
 }
 
-### Delete artist (requires admin)
+### Delete artist (requires owner or admin; 409 if it still has artworks)
 DELETE {{baseUrl}}/api/artists/6528a1b2c3d4e5f6a7b8c9d0
 
 ### ----- ARTWORKS -----
-### Get all artworks
+### Get all artworks (optional ?period=&type=&year=&artistId=)
 GET {{baseUrl}}/api/artworks
+
+### Filter artworks by period and type
+GET {{baseUrl}}/api/artworks?period=Baroque&type=Painting
 
 ### Get one artwork by id
 GET {{baseUrl}}/api/artworks/6528a1b2c3d4e5f6a7b8c9d1
@@ -53,14 +72,17 @@ Content-Type: application/json
 
 {
   "title": "The Two Fridas",
-  "description": "Oil painting by Frida Kahlo.",
-  "artistId": "6528a1b2c3d4e5f6a7b8c9d0",
   "year": 1939,
+  "period": "Surrealism",
+  "type": "Painting",
   "medium": "Oil on canvas",
-  "imageUrl": "https://example.com/two-fridas.jpg"
+  "dimensions": "173.5 cm x 173 cm",
+  "description": "Double self-portrait.",
+  "file": "https://example.com/two-fridas.jpg",
+  "artistId": "6528a1b2c3d4e5f6a7b8c9d0"
 }
 
-### Update artwork (requires login)
+### Update artwork (requires owner or admin)
 PUT {{baseUrl}}/api/artworks/6528a1b2c3d4e5f6a7b8c9d1
 Content-Type: application/json
 
@@ -69,7 +91,7 @@ Content-Type: application/json
   "description": "Updated description."
 }
 
-### Delete artwork (requires admin)
+### Delete artwork (requires owner or admin; deletes its links too)
 DELETE {{baseUrl}}/api/artworks/6528a1b2c3d4e5f6a7b8c9d1
 
 ### ----- KEYWORDS -----
@@ -84,24 +106,22 @@ POST {{baseUrl}}/api/keywords
 Content-Type: application/json
 
 {
-  "name": "surrealism",
-  "description": "Art movement of the 20th century."
+  "keyword": "Surrealism"
 }
 
-### Update keyword (requires login)
+### Update keyword (requires owner or admin)
 PUT {{baseUrl}}/api/keywords/6528a1b2c3d4e5f6a7b8c9d2
 Content-Type: application/json
 
 {
-  "name": "surrealism",
-  "description": "Updated description."
+  "keyword": "surrealism"
 }
 
-### Delete keyword (requires admin)
+### Delete keyword (requires owner or admin; deletes its links too)
 DELETE {{baseUrl}}/api/keywords/6528a1b2c3d4e5f6a7b8c9d2
 
 ### ----- ARTWORK-KEYWORDS -----
-### Get all artwork-keyword links
+### Get all links (optional ?artworkId=&keywordId=)
 GET {{baseUrl}}/api/artworkKeywords
 
 ### Get one link by id
@@ -116,7 +136,7 @@ Content-Type: application/json
   "keywordId": "6528a1b2c3d4e5f6a7b8c9d2"
 }
 
-### Update link (requires login)
+### Update link (requires owner or admin)
 PUT {{baseUrl}}/api/artworkKeywords/6528a1b2c3d4e5f6a7b8c9d3
 Content-Type: application/json
 
@@ -125,34 +145,23 @@ Content-Type: application/json
   "keywordId": "6528a1b2c3d4e5f6a7b8c9d4"
 }
 
-### Delete link (requires admin)
+### Delete link (requires owner or admin)
 DELETE {{baseUrl}}/api/artworkKeywords/6528a1b2c3d4e5f6a7b8c9d3
 
-### ----- USERS -----
-### Get all users (requires login)
+### ----- USERS (admin only) -----
+### Get all users
 GET {{baseUrl}}/api/users
 
-### Get one user by id (requires login)
+### Get one user by id
 GET {{baseUrl}}/api/users/6528a1b2c3d4e5f6a7b8c9d5
 
-### Update my user profile (requires login/owner)
+### Change a user's role (promote/demote)
 PUT {{baseUrl}}/api/users/6528a1b2c3d4e5f6a7b8c9d5
 Content-Type: application/json
 
 {
-  "name": "Jane Doe",
-  "email": "jane@example.com"
+  "role": "admin"
 }
 
-### Delete user (requires owner/admin)
+### Delete user
 DELETE {{baseUrl}}/api/users/6528a1b2c3d4e5f6a7b8c9d5
-
-### ----- AUTH -----
-### Start GitHub OAuth login
-GET {{baseUrl}}/api/auth/github
-
-### Authentication status
-GET {{baseUrl}}/api/auth/status
-
-### Logout
-GET {{baseUrl}}/api/auth/logout

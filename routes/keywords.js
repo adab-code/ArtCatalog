@@ -1,29 +1,29 @@
 // Route definitions for the keywords resource.
-// GETs are public; POST/PUT require authentication; DELETE requires admin.
-// All write routes run the shared ObjectId / body validation middleware.
+// GETs are public. POST requires login. PUT/DELETE require the user who
+// created the keyword (createdBy) or an admin.
 
 const express = require('express');
 const router = express.Router();
 const keywordsController = require('../controllers/keywords');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAuthenticated, isOwnerOrAdmin } = require('../middleware/auth');
 const { keywordRules, validate, isValidObjectId } = require('../middleware/validation');
 
 // Public: list all keywords.
 router.get('/', keywordsController.getAllKeywords);
-// Public: get a single keyword (the :id param must be a valid ObjectId).
+// Public: get a single keyword.
 router.get('/:id', isValidObjectId, keywordsController.getKeywordById);
-// Protected: create a keyword (body validated).
+// Protected: create a keyword (body validated, stored lowercase).
 router.post('/', isAuthenticated, keywordRules(), validate, keywordsController.createKeyword);
-// Protected: update a keyword.
+// Owner or admin: update a keyword.
 router.put(
   '/:id',
-  isAuthenticated,
   isValidObjectId,
+  isOwnerOrAdmin('keywords'),
   keywordRules(),
   validate,
   keywordsController.updateKeyword
 );
-// Admin only: delete a keyword.
-router.delete('/:id', isAuthenticated, isAdmin, isValidObjectId, keywordsController.deleteKeyword);
+// Owner or admin: delete a keyword and its links.
+router.delete('/:id', isValidObjectId, isOwnerOrAdmin('keywords'), keywordsController.deleteKeyword);
 
 module.exports = router;

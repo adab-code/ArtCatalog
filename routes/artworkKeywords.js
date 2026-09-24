@@ -1,22 +1,22 @@
-// Route definitions for the artworkKeywords resource (links between artworks
-// and keywords). GETs are public; POST/PUT require authentication; DELETE
-// requires admin. All write routes run the shared validation middleware.
+// Route definitions for the artwork_keywords resource (links between artworks
+// and keywords). GETs are public. POST requires login. PUT/DELETE require the
+// user who created the link (addedBy) or an admin.
 
 const express = require('express');
 const router = express.Router();
 const artworkKeywordsController = require('../controllers/artworkKeywords');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAuthenticated, isOwnerOrAdmin } = require('../middleware/auth');
 const {
   artworkKeywordRules,
   validate,
   isValidObjectId,
 } = require('../middleware/validation');
 
-// Public: list all artwork-keyword links.
+// Public: list all links (optional ?artworkId=, ?keywordId= filters).
 router.get('/', artworkKeywordsController.getAllArtworkKeywords);
 // Public: get a single link.
 router.get('/:id', isValidObjectId, artworkKeywordsController.getArtworkKeywordById);
-// Protected: create a link.
+// Protected: create a link (checks that artwork/keyword exist; 409 on duplicate).
 router.post(
   '/',
   isAuthenticated,
@@ -24,21 +24,20 @@ router.post(
   validate,
   artworkKeywordsController.createArtworkKeyword
 );
-// Protected: update a link.
+// Owner or admin: update a link.
 router.put(
   '/:id',
-  isAuthenticated,
   isValidObjectId,
+  isOwnerOrAdmin('artwork_keywords'),
   artworkKeywordRules(),
   validate,
   artworkKeywordsController.updateArtworkKeyword
 );
-// Admin only: delete a link.
+// Owner or admin: delete a link.
 router.delete(
   '/:id',
-  isAuthenticated,
-  isAdmin,
   isValidObjectId,
+  isOwnerOrAdmin('artwork_keywords'),
   artworkKeywordsController.deleteArtworkKeyword
 );
 

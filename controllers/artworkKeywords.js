@@ -1,19 +1,22 @@
-// Controller for the "artworkKeywords" collection (many-to-many links between
+// Controller for the "artwork_keywords" collection (many-to-many links between
 // artworks and keywords). Each document references an artworkId and keywordId.
 // All handlers delegate any thrown error to the central error handler.
 
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
-const COLLECTION = 'artworkKeywords';
+const COLLECTION = 'artwork_keywords';
 // Fields a client may update (whitelist to avoid mass assignment).
 const ALLOWED_FIELDS = ['artworkId', 'keywordId'];
 
-/** Returns every artwork-keyword link in the collection. */
+/** Returns every link; supports ?artworkId= and ?keywordId= filters. */
 async function getAllArtworkKeywords(req, res, next) {
   try {
     const db = getDatabase();
-    const links = await db.collection(COLLECTION).find().toArray();
+    const query = {};
+    if (req.query.artworkId) query.artworkId = new ObjectId(req.query.artworkId);
+    if (req.query.keywordId) query.keywordId = new ObjectId(req.query.keywordId);
+    const links = await db.collection(COLLECTION).find(query).toArray();
     res.status(200).json(links);
   } catch (err) {
     next(err);
@@ -36,15 +39,41 @@ async function getArtworkKeywordById(req, res, next) {
   }
 }
 
-/** Creates a new link and returns it with status 201. */
+/**
+ * Creates a new link.
+ * Returns 400 if the artwork or keyword does not exist, and 409 if the
+ * link already exists (duplicate).
+ */
 async function createArtworkKeyword(req, res, next) {
   try {
     const db = getDatabase();
+    const artworkId = new ObjectId(req.body.artworkId);
+    const keywordId = new ObjectId(req.body.keywordId);
+
+    const artwork = await db.collection('artworks').findOne({ _id: artworkId });
+    if (!artwork) {
+      return res
+        .status(400)
+        .json({ message: 'artworkId does not reference an existing artwork' });
+    }
+    const keyword = await db.collection('keywords').findOne({ _id: keywordId });
+    if (!keyword) {
+      return res
+        .status(400)
+        .json({ message: 'keywordId does not reference an existing keyword' });
+    }
+    const existing = await db.collection(COLLECTION).findOne({ artworkId, keywordId });
+    if (existing) {
+      return res
+        .status(409)
+        .json({ message: 'This artwork is already linked to that keyword' });
+    }
+
     const link = {
-      artworkId: new ObjectId(req.body.artworkId),
-      keywordId: new ObjectId(req.body.keywordId),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      artworkId,
+      keywordId,
+      addedBy: req.user._id,
+      addedAt: new Date(),
     };
     const result = await db.collection(COLLECTION).insertOne(link);
     const created = await db.collection(COLLECTION).findOne({ _id: result.insertedId });
@@ -58,13 +87,31 @@ async function createArtworkKeyword(req, res, next) {
 async function updateArtworkKeyword(req, res, next) {
   try {
     const db = getDatabase();
-    const updatedFields = { updatedAt: new Date() };
+    const updatedFields = {};
     ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
         // Reference ids must be converted back into ObjectIds for the DB.
         updatedFields[field] = new ObjectId(req.body[field]);
       }
     });
+    // Keep the same invariants as createArtworkKeyword: artworkId/keywordId
+    // must reference existing documents.
+    if (updatedFields.artworkId !== undefined) {
+      const artwork = await db.collection('artworks').findOne({ _id: updatedFields.artworkId });
+      if (!artwork) {
+        return res
+          .status(400)
+          .json({ message: 'artworkId does not reference an existing artwork' });
+      }
+    }
+    if (updatedFields.keywordId !== undefined) {
+      const keyword = await db.collection('keywords').findOne({ _id: updatedFields.keywordId });
+      if (!keyword) {
+        return res
+          .status(400)
+          .json({ message: 'keywordId does not reference an existing keyword' });
+      }
+    }
     const result = await db.collection(COLLECTION).updateOne(
       { _id: new ObjectId(req.params.id) },
       { $set: updatedFields }
@@ -77,6 +124,12 @@ async function updateArtworkKeyword(req, res, next) {
     });
     res.status(200).json(updated);
   } catch (err) {
+    // MongoDB duplicate key error (unique index on artworkId + keywordId).
+    if (err.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: 'This artwork is already linked to that keyword' });
+    }
     next(err);
   }
 }

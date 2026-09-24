@@ -46,18 +46,36 @@ function validate(req, res, next) {
 
 /** Rules for creating/updating an artist. */
 function artistRules() {
-  return [body('name').trim().notEmpty().withMessage('name is required')];
+  return [
+    body('firstName').trim().notEmpty().withMessage('firstName is required'),
+    body('lastName').trim().notEmpty().withMessage('lastName is required'),
+    body('birthDate').isISO8601().withMessage('birthDate must be a valid date'),
+    body('deathDate')
+      .optional({ values: 'falsy' })
+      .isISO8601()
+      .withMessage('deathDate must be a valid date'),
+    body('country').trim().notEmpty().withMessage('country is required'),
+  ];
 }
 
 /** Rules for creating/updating an artwork. */
 function artworkRules() {
   return [
     body('title').trim().notEmpty().withMessage('title is required'),
+    body('year')
+      .isInt({ min: 1 })
+      .withMessage('year must be a positive integer')
+      .bail() // stop checking this field if it is not an integer
+      .custom((value) => value <= new Date().getFullYear())
+      .withMessage('year cannot be in the future'),
+    body('period').trim().notEmpty().withMessage('period is required'),
+    body('type').trim().notEmpty().withMessage('type is required'),
+    body('file').trim().notEmpty().withMessage('file is required'),
     body('artistId')
       .trim()
       .notEmpty()
       .withMessage('artistId is required')
-      .bail() // stop checking this field if it is missing/empty
+      .bail()
       .custom(isValidObjectIdValue)
       .withMessage('artistId must be a valid ObjectId'),
   ];
@@ -65,7 +83,15 @@ function artworkRules() {
 
 /** Rules for creating/updating a keyword. */
 function keywordRules() {
-  return [body('name').trim().notEmpty().withMessage('name is required')];
+  return [
+    body('keyword')
+      .trim()
+      .notEmpty()
+      .withMessage('keyword is required')
+      .bail()
+      .isLength({ min: 2, max: 40 })
+      .withMessage('keyword must be between 2 and 40 characters'),
+  ];
 }
 
 /** Rules for linking an artwork with a keyword. */
@@ -88,11 +114,10 @@ function artworkKeywordRules() {
   ];
 }
 
-/** Rules for updating a user profile. */
+/** Rules for updating a user (role change, admin only). */
 function userRules() {
   return [
-    body('name').trim().notEmpty().withMessage('name is required'),
-    body('email').isEmail().withMessage('a valid email is required'),
+    body('role').isIn(['user', 'admin']).withMessage('role must be "user" or "admin"'),
   ];
 }
 

@@ -1,6 +1,6 @@
-// Authentication routes (GitHub OAuth2 + session status).
+// Authentication routes (GitHub OAuth2 + session helpers).
 // /github starts the OAuth flow, /github/callback receives the redirect from
-// GitHub, and the remaining routes handle failure, logout, and status.
+// GitHub, and /me is used by a frontend to read the login state.
 
 const express = require('express');
 const router = express.Router();
@@ -20,9 +20,14 @@ router.get(
 );
 // Handles the failure case after OAuth.
 router.get('/login/failed', authController.authFailure);
+// Development-only login helper (until GitHub OAuth is configured in .env).
+// Mounted only in development so it never exists in production.
+if (process.env.NODE_ENV === 'development') {
+  router.get('/dev-login', authController.devLogin);
+}
 // Ends the current session.
 router.get('/logout', authController.logout);
-// Reports the current authentication status.
-router.get('/status', authController.status);
+// "Who am I": 200 with the user if logged in, 401 otherwise.
+router.get('/me', authController.me);
 
 module.exports = router;

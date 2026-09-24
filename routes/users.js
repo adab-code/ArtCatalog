@@ -1,34 +1,27 @@
 // Route definitions for the users resource.
-// All routes require authentication; PUT/DELETE are limited to the resource
-// owner or an admin (isOwnerOrAdmin).
+// ALL routes are admin-only (401 if not logged in, 403 if not an admin).
+// Admins manage roles: list users, view one, promote/demote, or delete.
 
 const express = require('express');
 const router = express.Router();
 const usersController = require('../controllers/users');
-const { isAuthenticated, isOwnerOrAdmin } = require('../middleware/auth');
+const { isAdmin } = require('../middleware/auth');
 const { userRules, validate, isValidObjectId } = require('../middleware/validation');
 
-// Requires login: list all users.
-router.get('/', isAuthenticated, usersController.getAllUsers);
-// Requires login: get a single user.
-router.get('/:id', isAuthenticated, isValidObjectId, usersController.getUserById);
-// Owner or admin: update a user profile.
+// Admin only: list all users.
+router.get('/', isAdmin, usersController.getAllUsers);
+// Admin only: get a single user.
+router.get('/:id', isAdmin, isValidObjectId, usersController.getUserById);
+// Admin only: change a user's role.
 router.put(
   '/:id',
-  isAuthenticated,
+  isAdmin,
   isValidObjectId,
-  isOwnerOrAdmin,
   userRules(),
   validate,
   usersController.updateUser
 );
-// Owner or admin: delete a user.
-router.delete(
-  '/:id',
-  isAuthenticated,
-  isValidObjectId,
-  isOwnerOrAdmin,
-  usersController.deleteUser
-);
+// Admin only: delete a user.
+router.delete('/:id', isAdmin, isValidObjectId, usersController.deleteUser);
 
 module.exports = router;

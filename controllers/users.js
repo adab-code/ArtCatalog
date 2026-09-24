@@ -1,22 +1,21 @@
-// Controller for the "users" collection.
+// Controller for the "users" collection (admin only).
 // Users are created automatically by the GitHub login flow (see config/passport.js).
-// Responses use projections so no sensitive fields are exposed.
-// All handlers delegate any thrown error to the central error handler.
+// Admins can list users, view one, change the role, or delete a user.
+// Responses use projections so no internal fields are exposed.
 
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
 const COLLECTION = 'users';
-// Fields a client may update (whitelist to avoid mass assignment).
-const ALLOWED_FIELDS = ['name', 'email', 'username', 'avatar'];
-// Fields returned to clients (excludes createdAt/updatedAt and internals).
+// Only the role can be edited by an admin (whitelist to avoid mass assignment).
+const ALLOWED_FIELDS = ['role'];
+// Fields returned to clients.
 const PROJECTION = {
   _id: 1,
-  githubId: 1,
-  username: 1,
-  name: 1,
+  oauthProvider: 1,
+  oauthId: 1,
+  displayName: 1,
   email: 1,
-  avatar: 1,
   role: 1,
 };
 
@@ -48,11 +47,11 @@ async function getUserById(req, res, next) {
   }
 }
 
-/** Partially updates a user profile (only whitelisted fields) and returns it. */
+/** Changes a user's role (e.g. promote someone to admin). */
 async function updateUser(req, res, next) {
   try {
     const db = getDatabase();
-    const updatedFields = { updatedAt: new Date() };
+    const updatedFields = {};
     ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) {
         updatedFields[field] = req.body[field];

@@ -1,29 +1,29 @@
 // Route definitions for the artworks resource.
-// GETs are public; POST/PUT require authentication; DELETE requires admin.
-// All write routes run the shared ObjectId / body validation middleware.
+// GETs are public. POST requires login. PUT/DELETE require the user who
+// created the artwork (createdBy) or an admin.
 
 const express = require('express');
 const router = express.Router();
 const artworksController = require('../controllers/artworks');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAuthenticated, isOwnerOrAdmin } = require('../middleware/auth');
 const { artworkRules, validate, isValidObjectId } = require('../middleware/validation');
 
-// Public: list all artworks.
+// Public: list all artworks (optional ?period=, ?type=, ?year=, ?artistId= filters).
 router.get('/', artworksController.getAllArtworks);
-// Public: get a single artwork (the :id param must be a valid ObjectId).
+// Public: get a single artwork.
 router.get('/:id', isValidObjectId, artworksController.getArtworkById);
 // Protected: create an artwork (body validated).
 router.post('/', isAuthenticated, artworkRules(), validate, artworksController.createArtwork);
-// Protected: update an artwork.
+// Owner or admin: update an artwork.
 router.put(
   '/:id',
-  isAuthenticated,
   isValidObjectId,
+  isOwnerOrAdmin('artworks'),
   artworkRules(),
   validate,
   artworksController.updateArtwork
 );
-// Admin only: delete an artwork.
-router.delete('/:id', isAuthenticated, isAdmin, isValidObjectId, artworksController.deleteArtwork);
+// Owner or admin: delete an artwork and its keyword links.
+router.delete('/:id', isValidObjectId, isOwnerOrAdmin('artworks'), artworksController.deleteArtwork);
 
 module.exports = router;

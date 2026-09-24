@@ -8,6 +8,13 @@ const GitHubStrategy = require('passport-github2').Strategy;
 const { ObjectId } = require('mongodb');
 const { getDatabase } = require('../data/database');
 
+// GitHub ids listed in ADMIN_GITHUB_IDS (comma-separated) get role "admin"
+// on their first login; every other user keeps role "user" by default.
+const adminGithubIds = (process.env.ADMIN_GITHUB_IDS || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter(Boolean);
+
 // Store only the user id in the session.
 passport.serializeUser((user, done) => {
   done(null, user._id.toString());
@@ -37,28 +44,34 @@ if (
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
         callbackURL: process.env.GITHUB_CALLBACK_URL,
       },
-      // Verified callback: find the user by GitHub id or create a new one.
+      // Verified callback: find the user by OAuth ids or create a new one.
       async (accessToken, refreshToken, profile, done) => {
         try {
           const db = getDatabase();
-          let user = await db.collection('users').findOne({ githubId: String(profile.id) });
+          const oauthId = String(profile.id);
+          let user = await db
+            .collection('users')
+            .findOne({ oauthProvider: 'github', oauthId });
 
           if (!user) {
             // First-time sign in: build the user document from the GitHub profile.
             const newUser = {
-              githubId: String(profile.id),
-              username: profile.username,
-              name: profile.displayName || profile.username,
-              email:
-                profile.emails && profile.emails[0] ? profile.emails[0].value : null,
-              avatar:
-                profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-              role: 'user',
+              oauthProvider: 'github',
+              oauthId,
+              displayName: profile.displayName || profile.username,
+              email: profile.emails && profile.emails[0] ? profile.emails[0].value : null,
+              role: adminGithubIds.includes(oauthId) ? 'admin' : 'user',
               createdAt: new Date(),
-              updatedAt: new Date(),
+              lastLoginAt: new Date(),
             };
             const result = await db.collection('users').insertOne(newUser);
             user = { _id: result.insertedId, ...newUser };
+          } else {
+            // Existing user: just refresh the last login timestamp.
+            await db
+              .collection('users')
+              .updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
+            user.lastLoginAt = new Date();
           }
 
           return done(null, user);
