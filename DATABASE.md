@@ -59,11 +59,13 @@ access from anywhere**) para poder conectar desde local y desde Render.
 
 - El nombre debe coincidir (con las mismas mayúsculas) en la URI, en mongosh
   (`use ArtCatalog`) y en Compass (**Create Database** → `ArtCatalog`).
-- La base no existe hasta que guardas el primer documento. Por eso el asistente
-  web de Atlas (**Browse Collections** → **Create Database**) **siempre pide
-  una collection name**: usa database name `ArtCatalog` y collection name
-  `artists` (una de las 5 de la sección 6). Si lo haces así:
-  - puedes omitir `db.createCollection("artists")` en la sección 6, y
+- Si la creas con la **web de Atlas** (**Browse Collections** → **Create
+  Database**), el asistente **te obliga** a escribir también una collection name
+  (no te deja guardar en blanco): usa database name `ArtCatalog` y collection
+  name `artists` (cualquiera de las 5 de la sección 6 está bien, solo necesita
+  poder avanzar). Si lo haces así:
+  - puedes omitir `db.createCollection("artists")` en la sección 6 (ya existe),
+    y
   - la base no aparecerá en **Browse Collections** hasta que tenga datos; en
     mongosh verifícala con `db.getName()`.
 

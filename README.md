@@ -103,7 +103,10 @@ The API is served at `http://localhost:3000` and the Swagger docs at
 On startup the API **auto-creates** the 5 collections plus the unique indexes
 (`keywords.keyword` and `artwork_keywords.(artworkId, keywordId)`) — you should
 see `Database schema ready (collections and unique indexes)` in the console.
-No manual setup is required (details in `DATABASE.md`).
+No manual setup is required (details in `DATABASE.md`). If you still want to
+create the database from the Atlas web page (**Browse Collections** → **Create
+Database**), the wizard **forces you to type a collection name** — use database
+name `ArtCatalog` and collection name `artists`.
 
 | Collection | Description |
 |---|---|
