@@ -1,3 +1,4 @@
-# secrets and configuration
-.env
 node_modules/
+.env
+coverage/
+*.log
