@@ -1,0 +1,20 @@
+{
+  "name": "artcatalog",
+  "version": "1.0.0",
+  "description": "Final Project",
+  "homepage": "https://github.com/adab-code/ArtCatalog#readme",
+  "bugs": {
+    "url": "https://github.com/adab-code/ArtCatalog/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adab-code/ArtCatalog.git"
+  },
+  "license": "ISC",
+  "author": "team08",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
