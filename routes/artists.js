@@ -1,6 +1,7 @@
 // Route definitions for the artists resource.
-// GETs are public. POST requires login. PUT/DELETE require the user who
-// created the artist (createdBy) or an admin.
+// GETs are public (including GET /:id/artworks, which lists an artist's
+// artworks). POST requires login. PUT/DELETE require the user who created
+// the artist (createdBy) or an admin.
 
 const express = require('express');
 const router = express.Router();
@@ -12,6 +13,8 @@ const { artistRules, validate, isValidObjectId } = require('../middleware/valida
 router.get('/', artistsController.getAllArtists);
 // Public: get a single artist.
 router.get('/:id', isValidObjectId, artistsController.getArtistById);
+// Public: all artworks by this artist (stretch endpoint).
+router.get('/:id/artworks', isValidObjectId, artistsController.getArtistArtworks);
 // Protected: create an artist (body validated).
 router.post('/', isAuthenticated, artistRules(), validate, artistsController.createArtist);
 // Owner or admin: update an artist.

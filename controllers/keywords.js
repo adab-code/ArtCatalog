@@ -110,10 +110,39 @@ async function deleteKeyword(req, res, next) {
   }
 }
 
+/**
+ * Returns all artworks tagged with one keyword (stretch endpoint).
+ * Resolves the artwork_keywords links and returns the artwork documents.
+ * 404 if the keyword does not exist.
+ */
+async function getKeywordArtworks(req, res, next) {
+  try {
+    const db = getDatabase();
+    const id = new ObjectId(req.params.id);
+    const keyword = await db.collection('keywords').findOne({ _id: id });
+    if (!keyword) {
+      return res.status(404).json({ message: 'Keyword not found' });
+    }
+    const links = await db.collection('artwork_keywords').find({ keywordId: id }).toArray();
+    const artworkIds = links.map((link) => link.artworkId);
+    if (artworkIds.length === 0) {
+      return res.status(200).json([]);
+    }
+    const artworks = await db
+      .collection('artworks')
+      .find({ _id: { $in: artworkIds } })
+      .toArray();
+    res.status(200).json(artworks);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getAllKeywords,
   getKeywordById,
   createKeyword,
   updateKeyword,
   deleteKeyword,
+  getKeywordArtworks,
 };

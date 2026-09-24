@@ -146,10 +146,74 @@ async function deleteArtwork(req, res, next) {
   }
 }
 
+/**
+ * Advanced search (stretch endpoint). Combines a free-text ?q= search on the
+ * title with the regular ?period=, ?type=, ?year= and ?artistId= filters.
+ * Returns 400 for an invalid year or artistId.
+ */
+async function searchArtworks(req, res, next) {
+  try {
+    const db = getDatabase();
+    const query = {};
+    if (req.query.q) {
+      query.title = { $regex: req.query.q, $options: 'i' };
+    }
+    if (req.query.period) query.period = req.query.period;
+    if (req.query.type) query.type = req.query.type;
+    if (req.query.year) {
+      const year = Number(req.query.year);
+      if (!Number.isInteger(year) || year < 1) {
+        return res.status(400).json({ message: 'year must be a positive integer' });
+      }
+      query.year = year;
+    }
+    if (req.query.artistId) {
+      if (!ObjectId.isValid(req.query.artistId)) {
+        return res.status(400).json({ message: 'artistId must be a valid ObjectId' });
+      }
+      query.artistId = new ObjectId(req.query.artistId);
+    }
+    const artworks = await db.collection(COLLECTION).find(query).toArray();
+    res.status(200).json(artworks);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Returns the keywords linked to one artwork (stretch endpoint).
+ * Resolves the artwork_keywords links and returns the keyword documents.
+ * 404 if the artwork does not exist.
+ */
+async function getArtworkKeywords(req, res, next) {
+  try {
+    const db = getDatabase();
+    const id = new ObjectId(req.params.id);
+    const artwork = await db.collection('artworks').findOne({ _id: id });
+    if (!artwork) {
+      return res.status(404).json({ message: 'Artwork not found' });
+    }
+    const links = await db.collection('artwork_keywords').find({ artworkId: id }).toArray();
+    const keywordIds = links.map((link) => link.keywordId);
+    if (keywordIds.length === 0) {
+      return res.status(200).json([]);
+    }
+    const keywords = await db
+      .collection('keywords')
+      .find({ _id: { $in: keywordIds } })
+      .toArray();
+    res.status(200).json(keywords);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getAllArtworks,
   getArtworkById,
   createArtwork,
   updateArtwork,
   deleteArtwork,
+  searchArtworks,
+  getArtworkKeywords,
 };

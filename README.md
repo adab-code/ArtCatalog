@@ -4,7 +4,9 @@ CSE 341 Final project
 
 Art catalog REST API built with **Express + MongoDB**. It provides CRUD for
 artists, artworks, keywords and their relationships (artwork-keywords),
-GitHub OAuth2 login, rate limiting, and auto-generated Swagger documentation.
+GitHub OAuth2 login, rate limiting, relationship lookups (an artist's
+artworks, an artwork's keywords, artworks by keyword), an advanced artwork
+search, and auto-generated Swagger documentation.
 
 ## Project Structure
 
@@ -161,7 +163,10 @@ login via `/api/auth/github`.
 | `/auth/*` routes | Public (`/auth/me` returns `401` if there is no session) |
 
 List routes accept simple query filters (`?country=`, `?period=`, `?type=`,
-`?year=`, `?artistId=`, `?artworkId=`, `?keywordId=`).
+`?year=`, `?artistId=`, `?artworkId=`, `?keywordId=`), and
+`/api/artworks/search` adds a free-text `?q=` on the title. There are also
+public relationship endpoints: `/api/artists/:id/artworks`,
+`/api/artworks/:id/keywords` and `/api/keywords/:id/artworks`.
 
 ### Artists
 
@@ -169,6 +174,7 @@ List routes accept simple query filters (`?country=`, `?period=`, `?type=`,
 |---|---|---|
 | GET | `/api/artists` | List all (optional `?country=`) |
 | GET | `/api/artists/:id` | Get one |
+| GET | `/api/artists/:id/artworks` | Get all artworks by this artist |
 | POST | `/api/artists` | Create (login required) |
 | PUT | `/api/artists/:id` | Update (owner or admin) |
 | DELETE | `/api/artists/:id` | Delete (owner or admin; `409` if the artist still has artworks) |
@@ -178,7 +184,9 @@ List routes accept simple query filters (`?country=`, `?period=`, `?type=`,
 | Method | Route | Description |
 |---|---|---|
 | GET | `/api/artworks` | List all (`?period=`, `?type=`, `?year=`, `?artistId=`) |
+| GET | `/api/artworks/search` | Advanced search: combines `?q=` (text on title), `?period=`, `?type=`, `?year=`, `?artistId=` |
 | GET | `/api/artworks/:id` | Get one |
+| GET | `/api/artworks/:id/keywords` | Get the keywords tagged on this artwork |
 | POST | `/api/artworks` | Create (login required) |
 | PUT | `/api/artworks/:id` | Update (owner or admin) |
 | DELETE | `/api/artworks/:id` | Delete + its keyword links (owner or admin) |
@@ -189,6 +197,7 @@ List routes accept simple query filters (`?country=`, `?period=`, `?type=`,
 |---|---|---|
 | GET | `/api/keywords` | List all |
 | GET | `/api/keywords/:id` | Get one |
+| GET | `/api/keywords/:id/artworks` | Get all artworks tagged with this keyword |
 | POST | `/api/keywords` | Create (login required) |
 | PUT | `/api/keywords/:id` | Update (owner or admin) |
 | DELETE | `/api/keywords/:id` | Delete + its links (owner or admin) |
@@ -251,12 +260,13 @@ VS Code extension and click "Send Request").
 
 ## Status & suggested improvements
 
-The core requirements are implemented and working. Ideas to improve or extend
-the project (ordered by value):
+The core requirements and the "stretch" relationship/search endpoints are
+implemented and working. Ideas to improve or extend the project (ordered by
+value):
 
-- Advanced search: `GET /artworks/search?period=...&keyword=...&yearFrom=...`
-- Nested/joined responses with MongoDB `$lookup` (e.g. artist + their artworks,
-  artwork + its keywords)
+- Nested responses with a single MongoDB `$lookup` pipeline (the stretch
+  endpoints currently resolve relationships with separate queries)
+- Full-text search across more fields (e.g. artist name + country)
 - Pagination and sorting on list routes (`?page=&limit=&sort=`)
 - A seed script that loads sample artists, artworks and keywords for demos
 - Unit tests for POST/PUT/DELETE routes (currently only GET routes are tested)

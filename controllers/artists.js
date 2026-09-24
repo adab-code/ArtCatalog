@@ -19,6 +19,25 @@ const ALLOWED_FIELDS = [
   'locality',
 ];
 
+/**
+ * Returns all artworks by one artist (stretch endpoint).
+ * 404 if the artist does not exist, otherwise the list of artworks.
+ */
+async function getArtistArtworks(req, res, next) {
+  try {
+    const db = getDatabase();
+    const id = new ObjectId(req.params.id);
+    const artist = await db.collection('artists').findOne({ _id: id });
+    if (!artist) {
+      return res.status(404).json({ message: 'Artist not found' });
+    }
+    const artworks = await db.collection('artworks').find({ artistId: id }).toArray();
+    res.status(200).json(artworks);
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** Returns every artist; supports the optional ?country= filter. */
 async function getAllArtists(req, res, next) {
   try {
@@ -128,4 +147,11 @@ async function deleteArtist(req, res, next) {
   }
 }
 
-module.exports = { getAllArtists, getArtistById, createArtist, updateArtist, deleteArtist };
+module.exports = {
+  getAllArtists,
+  getArtistById,
+  createArtist,
+  updateArtist,
+  deleteArtist,
+  getArtistArtworks,
+};

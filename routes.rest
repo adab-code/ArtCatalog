@@ -26,6 +26,9 @@ GET {{baseUrl}}/api/artists?country=Spain
 ### Get one artist by id
 GET {{baseUrl}}/api/artists/6528a1b2c3d4e5f6a7b8c9d0
 
+### Get all artworks of an artist
+GET {{baseUrl}}/api/artists/6528a1b2c3d4e5f6a7b8c9d0/artworks
+
 ### Create artist (requires login)
 POST {{baseUrl}}/api/artists
 Content-Type: application/json
@@ -63,8 +66,17 @@ GET {{baseUrl}}/api/artworks
 ### Filter artworks by period and type
 GET {{baseUrl}}/api/artworks?period=Baroque&type=Painting
 
+### Advanced search: free text on the title
+GET {{baseUrl}}/api/artworks/search?q=Two%20Fridas
+
+### Advanced search: combine a text query with regular filters
+GET {{baseUrl}}/api/artworks/search?q=landscape&period=Baroque&type=Painting
+
 ### Get one artwork by id
 GET {{baseUrl}}/api/artworks/6528a1b2c3d4e5f6a7b8c9d1
+
+### Get the keywords of an artwork
+GET {{baseUrl}}/api/artworks/6528a1b2c3d4e5f6a7b8c9d1/keywords
 
 ### Create artwork (requires login)
 POST {{baseUrl}}/api/artworks
@@ -100,6 +112,9 @@ GET {{baseUrl}}/api/keywords
 
 ### Get one keyword by id
 GET {{baseUrl}}/api/keywords/6528a1b2c3d4e5f6a7b8c9d2
+
+### Get all artworks tagged with a keyword
+GET {{baseUrl}}/api/keywords/6528a1b2c3d4e5f6a7b8c9d2/artworks
 
 ### Create keyword (requires login)
 POST {{baseUrl}}/api/keywords

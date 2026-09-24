@@ -110,4 +110,52 @@ describe('GET routes', () => {
     expect(res.status).toBe(200);
     expect(res.body).toBeDefined();
   });
+
+  test('GET /api/artists/:id/artworks returns 200 with an array', async () => {
+    const res = await request(app).get('/api/artists/6528a1b2c3d4e5f6a7b8c9d0/artworks');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/artworks/:id/keywords returns 200 with an array', async () => {
+    const res = await request(app).get('/api/artworks/6528a1b2c3d4e5f6a7b8c9d1/keywords');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/keywords/:id/artworks returns 200 with an array', async () => {
+    const res = await request(app).get('/api/keywords/6528a1b2c3d4e5f6a7b8c9d2/artworks');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/artworks/search returns 200 with an array', async () => {
+    const res = await request(app).get('/api/artworks/search');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/artworks/search?q=... returns 200 with an array', async () => {
+    const res = await request(app).get('/api/artworks/search?q=landscape');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/artworks/search with filters returns 200 with an array', async () => {
+    const res = await request(app).get(
+      '/api/artworks/search?q=test&period=Baroque&type=Painting&artistId=6528a1b2c3d4e5f6a7b8c9d0'
+    );
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  test('GET /api/artworks/search with an invalid year returns 400', async () => {
+    const res = await request(app).get('/api/artworks/search?year=abc');
+    expect(res.status).toBe(400);
+  });
+
+  test('GET /api/artworks/search with an invalid artistId returns 400', async () => {
+    const res = await request(app).get('/api/artworks/search?artistId=not-an-id');
+    expect(res.status).toBe(400);
+  });
 });
