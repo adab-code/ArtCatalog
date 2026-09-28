@@ -5,7 +5,7 @@
     "description": "CSE 341 Final Project - Art Catalog REST API",
     "version": "1.0.0"
   },
-  "host": "https://artcatalog-7dt2.onrender.com",
+  "host": "artcatalog-7dt2.onrender.com",
   "basePath": "/api",
   "schemes": [
     "https"

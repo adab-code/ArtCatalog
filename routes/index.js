@@ -12,7 +12,8 @@ router.use('/api-docs', require('./swagger'));
 router.get('/', (req, res) => {
   res.json({
     message: 'Welcome to the ArtCatalog API',
-    docs: `http://localhost:${process.env.PORT || 3000}/api-docs`,
+    //docs: `http://localhost:${process.env.PORT || 3000}/api-docs`,
+    docs: `${process.env.BASE_URL || 'http://localhost:' + (process.env.PORT || 3000)}/api-docs`,
   });
 });
 
