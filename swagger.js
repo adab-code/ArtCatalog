@@ -11,7 +11,8 @@ const fs = require('fs');
 const swaggerAutogen = require('swagger-autogen')({ writeOutputFile: false });
 
 // API-level metadata used in the generated documentation.
-const doc = {
+//Para desarrollo
+/*const doc = {
   info: {
     title: 'ArtCatalog API',
     description: 'CSE 341 Final Project - Art Catalog REST API',
@@ -20,6 +21,18 @@ const doc = {
   host: `localhost:${process.env.PORT || 3000}`,
   basePath: '/api',
   schemes: ['http'],
+};*/
+
+//Para produccion
+const doc = {
+  info: {
+    title: 'ArtCatalog API',
+    description: 'CSE 341 Final Project - Art Catalog REST API',
+    version: '1.0.0',
+  },
+  host: `https://artcatalog-7dt2.onrender.com`,
+  basePath: '/api',
+  schemes: ['https'],
 };
 
 // Endpoints that are NOT meant for API consumers: the Swagger UI itself, the
