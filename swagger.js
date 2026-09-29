@@ -10,8 +10,25 @@ const fs = require('fs');
 // writeOutputFile:false -> we write the file ourselves after the cleanup.
 const swaggerAutogen = require('swagger-autogen')({ writeOutputFile: false });
 
+// Detectar el ambiente
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Construir el doc dinámicamente
+const doc = {
+  info: {
+    title: 'ArtCatalog API',
+    description: 'CSE 341 Final Project - Art Catalog REST API',
+    version: '1.0.0',
+  },
+  // Si hay BASE_URL en el .env, la usa. Si no, usa localhost por defecto.
+  host: process.env.BASE_URL
+    ? process.env.BASE_URL.replace(/^https?:\/\//, '')  // quita el "https://" porque swagger 2.0 no lo quiere en host
+    : `localhost:${process.env.PORT || 3000}`,
+  basePath: '/api',
+  schemes: isProduction ? ['https'] : ['http'],
+};
+
 // API-level metadata used in the generated documentation.
-//Para desarrollo
 /*const doc = {
   info: {
     title: 'ArtCatalog API',
@@ -22,18 +39,6 @@ const swaggerAutogen = require('swagger-autogen')({ writeOutputFile: false });
   basePath: '/api',
   schemes: ['http'],
 };*/
-
-//Para produccion
-const doc = {
-  info: {
-    title: 'ArtCatalog API',
-    description: 'CSE 341 Final Project - Art Catalog REST API',
-    version: '1.0.0',
-  },
-  host: `artcatalog-7dt2.onrender.com`,
-  basePath: '/api',
-  schemes: ['https'],
-};
 
 // Endpoints that are NOT meant for API consumers: the Swagger UI itself, the
 // welcome message, the browser-only GitHub OAuth redirect flow, and the
