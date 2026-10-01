@@ -13,6 +13,23 @@ const swaggerAutogen = require('swagger-autogen')({ writeOutputFile: false });
 // Detectar el ambiente
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Resources in the order they should appear in Swagger UI. The first segment of
+// each path selects the group, so this array doubles as the sort key for paths.
+const TAG_ORDER = ['artists', 'artworks', 'keywords', 'artworkKeywords', 'users', 'auth'];
+
+// Group name shown in Swagger UI for each resource.
+const TAG_NAMES = {
+  artists: 'Artists',
+  artworks: 'Artworks',
+  keywords: 'Keywords',
+  artworkKeywords: 'Artwork-Keywords',
+  users: 'Users',
+  auth: 'Auth',
+};
+
+// Order the HTTP methods are listed in inside a path.
+const METHOD_ORDER = ['get', 'post', 'put', 'patch', 'delete'];
+
 // Construir el doc dinámicamente
 const doc = {
   info: {
@@ -20,6 +37,8 @@ const doc = {
     description: 'CSE 341 Final Project - Art Catalog REST API',
     version: '1.0.0',
   },
+  // Declaring the tags here is what fixes the group order in Swagger UI.
+  tags: TAG_ORDER.map((resource) => ({ name: TAG_NAMES[resource] })),
   // Si hay BASE_URL en el .env, la usa. Si no, usa localhost por defecto.
   host: process.env.BASE_URL
     ? process.env.BASE_URL.replace(/^https?:\/\//, '')  // quita el "https://" porque swagger 2.0 no lo quiere en host
@@ -64,6 +83,8 @@ const endpointsFiles = ['./routes/index.js'];
  * - Remove the endpoints listed in REMOVE_PATHS.
  * - The ?year= filter is numeric (swagger-autogen guesses "string").
  * - artwork_keywords PUT can also answer 409 when the link already exists.
+ * - Group every operation under a resource tag and sort the paths and the
+ *   methods inside them so /api-docs is not one long "default" blob.
  */
 function cleanDoc(swaggerDoc) {
   const paths = swaggerDoc.paths;
@@ -94,6 +115,78 @@ function cleanDoc(swaggerDoc) {
   if (linkPut && !linkPut.responses['409']) {
     linkPut.responses['409'] = { description: 'Conflict' };
   }
+
+  sortDoc(swaggerDoc);
+}
+
+/**
+ * Sorts the document for readability, without touching any endpoint data:
+ * - Every operation gets the tag of its resource ("/artists/..." -> Artists).
+ *   Without tags Swagger UI dumps every endpoint under a single "default"
+ *   group, which is what made /api-docs look disorganized.
+ * - Paths are grouped by TAG_ORDER and sorted segment by segment inside a
+ *   group, so "/artworks/search" comes before "/artworks/{id}" and nested
+ *   routes come last.
+ * - Methods inside a path follow METHOD_ORDER (GET, POST, PUT, PATCH, DELETE).
+ * - Unknown resources are dropped from the sorted copy so a new route never
+ *   breaks the generation; REMOVE_PATHS already filtered out what should be
+ *   hidden.
+ */
+function sortDoc(swaggerDoc) {
+  const sorted = {};
+
+  const paths = Object.keys(swaggerDoc.paths)
+    .filter((path) => TAG_NAMES[resourceOf(path)])
+    .sort(
+      (a, b) =>
+        TAG_ORDER.indexOf(resourceOf(a)) - TAG_ORDER.indexOf(resourceOf(b)) ||
+        compareSegments(a, b)
+    );
+
+  for (const path of paths) {
+    const operations = swaggerDoc.paths[path];
+    const ordered = {};
+
+    for (const method of METHOD_ORDER) {
+      if (!operations[method]) continue;
+      operations[method].tags = [TAG_NAMES[resourceOf(path)]];
+      ordered[method] = operations[method];
+    }
+    // Keep anything that is not an operation (e.g. path level "parameters").
+    for (const key of Object.keys(operations)) {
+      if (!(key in ordered)) ordered[key] = operations[key];
+    }
+
+    sorted[path] = ordered;
+  }
+
+  swaggerDoc.paths = sorted;
+}
+
+// First path segment, i.e. the resource the endpoint belongs to.
+function resourceOf(path) {
+  return path.split('/')[1];
+}
+
+/**
+ * Compares two paths segment by segment so the order reads naturally:
+ * literal segments ("search") first, templated ones ("{id}") after, and a
+ * parent path before its children.
+ */
+function compareSegments(a, b) {
+  const left = a.split('/');
+  const right = b.split('/');
+  const length = Math.min(left.length, right.length);
+
+  for (let i = 0; i < length; i++) {
+    if (left[i] === right[i]) continue;
+    const leftIsTemplate = left[i].startsWith('{');
+    const rightIsTemplate = right[i].startsWith('{');
+    if (leftIsTemplate !== rightIsTemplate) return leftIsTemplate ? 1 : -1;
+    return left[i].localeCompare(right[i]);
+  }
+
+  return left.length - right.length;
 }
 
 swaggerAutogen(outputFile, endpointsFiles, doc).then((result) => {

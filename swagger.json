@@ -7,35 +7,35 @@
   },
   "host": "localhost:3000",
   "basePath": "/api",
+  "tags": [
+    {
+      "name": "Artists"
+    },
+    {
+      "name": "Artworks"
+    },
+    {
+      "name": "Keywords"
+    },
+    {
+      "name": "Artwork-Keywords"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Auth"
+    }
+  ],
   "schemes": [
     "http"
   ],
   "paths": {
-    "/auth/logout": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/auth/me": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
     "/artists/": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -51,6 +51,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -99,6 +102,9 @@
     },
     "/artists/{id}": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -121,6 +127,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -149,6 +158,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -182,6 +194,9 @@
     },
     "/artists/{id}/artworks": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -206,6 +221,9 @@
     },
     "/artworks/": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -236,6 +254,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -290,6 +311,9 @@
     },
     "/artworks/search": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -330,6 +354,9 @@
     },
     "/artworks/{id}": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -352,6 +379,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -380,6 +410,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -410,6 +443,9 @@
     },
     "/artworks/{id}/keywords": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -434,6 +470,9 @@
     },
     "/keywords/": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "responses": {
           "200": {
@@ -442,6 +481,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -475,6 +517,9 @@
     },
     "/keywords/{id}": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -497,6 +542,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -528,6 +576,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -558,6 +609,9 @@
     },
     "/keywords/{id}/artworks": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -582,6 +636,9 @@
     },
     "/artworkKeywords/": {
       "get": {
+        "tags": [
+          "Artwork-Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -602,6 +659,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Artwork-Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -638,6 +698,9 @@
     },
     "/artworkKeywords/{id}": {
       "get": {
+        "tags": [
+          "Artwork-Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -660,6 +723,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Artwork-Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -691,6 +757,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Artwork-Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -721,6 +790,9 @@
     },
     "/users/": {
       "get": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "responses": {
           "200": {
@@ -737,6 +809,9 @@
     },
     "/users/{id}": {
       "get": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {
@@ -765,6 +840,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {
@@ -793,6 +871,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {
@@ -817,6 +898,35 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }
