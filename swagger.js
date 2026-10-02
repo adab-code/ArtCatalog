@@ -57,6 +57,15 @@ const outputFile = './swagger.json';
 const endpointsFiles = ['./routes/index.js'];
 
 /**
+ * Returns the Swagger UI group ("tag") a path belongs to, based on its first
+ * segment: "/artists/{id}/artworks" -> "Artists", "/auth/me" -> "Auth".
+ */
+function tagFor(path) {
+  const segment = path.split('/').filter(Boolean)[0] || 'default';
+  return segment.charAt(0).toUpperCase() + segment.slice(1);
+}
+
+/**
  * Applies small fixes to the auto-generated document:
  * - The scanned routers already mount under /api, so strip that prefix from
  *   the generated paths and keep basePath "/api". Otherwise Swagger UI would
@@ -77,6 +86,14 @@ function cleanDoc(swaggerDoc) {
     if (key.startsWith('/api/')) {
       paths[key.slice(4)] = paths[key];
       delete paths[key];
+    }
+  }
+
+  // Group routes by entity (Artists, Artworks, Keywords, ArtworkKeywords, Users, Auth...).
+  for (const [path, methods] of Object.entries(paths)) {
+    const tag = tagFor(path);
+    for (const operation of Object.values(methods)) {
+      operation.tags = [tag];
     }
   }
 

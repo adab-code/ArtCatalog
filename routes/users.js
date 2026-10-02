@@ -15,6 +15,13 @@ router.get('/:id', isAdmin, isValidObjectId, usersController.getUserById);
 // Admin only: change a user's role.
 router.put(
   '/:id',
+  /* #swagger.parameters['body'] = {
+      in: 'body',
+      required: true,
+      schema: {
+          role: "admin"
+      }
+  } */
   isAdmin,
   isValidObjectId,
   userRules(),

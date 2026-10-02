@@ -11,18 +11,50 @@
     "http"
   ],
   "paths": {
-    "/auth/logout": {
+    "/login": {
       "get": {
+        "tags": [
+          "Login"
+        ],
         "description": "",
         "responses": {
-          "200": {
-            "description": "OK"
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/github/callback": {
+      "get": {
+        "tags": [
+          "Github"
+        ],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "tags": [
+          "Logout"
+        ],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
       }
     },
     "/auth/me": {
       "get": {
+        "tags": [
+          "Auth"
+        ],
         "description": "",
         "responses": {
           "200": {
@@ -36,6 +68,9 @@
     },
     "/artists/": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -51,6 +86,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -99,6 +137,9 @@
     },
     "/artists/{id}": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -121,6 +162,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -128,6 +172,44 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstName": {
+                  "type": "string",
+                  "example": "Pablo"
+                },
+                "middleName": {
+                  "type": "string",
+                  "example": ""
+                },
+                "lastName": {
+                  "type": "string",
+                  "example": "Picasso"
+                },
+                "birthDate": {
+                  "type": "string",
+                  "example": "1904-02-02"
+                },
+                "deathDate": {
+                  "type": "string",
+                  "example": "1973-03-03"
+                },
+                "country": {
+                  "type": "string",
+                  "example": "Spain"
+                },
+                "locality": {
+                  "type": "string",
+                  "example": "n"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -149,6 +231,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -182,6 +267,9 @@
     },
     "/artists/{id}/artworks": {
       "get": {
+        "tags": [
+          "Artists"
+        ],
         "description": "",
         "parameters": [
           {
@@ -206,6 +294,9 @@
     },
     "/artworks/": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -236,6 +327,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -290,6 +384,9 @@
     },
     "/artworks/search": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -330,6 +427,9 @@
     },
     "/artworks/{id}": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -352,6 +452,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -359,6 +462,52 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "example": "Sunflowers"
+                },
+                "year": {
+                  "type": "number",
+                  "example": 1888
+                },
+                "period": {
+                  "type": "string",
+                  "example": "Post-impressionism"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "Painting"
+                },
+                "medium": {
+                  "type": "string",
+                  "example": "Oil"
+                },
+                "dimensions": {
+                  "type": "string",
+                  "example": "92 cm x 73 cm"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "One of a series of sunflower still lifes."
+                },
+                "file": {
+                  "type": "string",
+                  "example": "sunflowers.jpg"
+                },
+                "artistId": {
+                  "type": "string",
+                  "example": "6ab73b2548f485276c4cea63"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -380,6 +529,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -410,6 +562,9 @@
     },
     "/artworks/{id}/keywords": {
       "get": {
+        "tags": [
+          "Artworks"
+        ],
         "description": "",
         "parameters": [
           {
@@ -434,6 +589,9 @@
     },
     "/keywords/": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "responses": {
           "200": {
@@ -442,6 +600,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -475,6 +636,9 @@
     },
     "/keywords/{id}": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -497,6 +661,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -504,6 +671,20 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "keyword": {
+                  "type": "string",
+                  "example": "still-life"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -528,6 +709,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -558,6 +742,9 @@
     },
     "/keywords/{id}/artworks": {
       "get": {
+        "tags": [
+          "Keywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -582,6 +769,9 @@
     },
     "/artworkKeywords/": {
       "get": {
+        "tags": [
+          "ArtworkKeywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -602,6 +792,9 @@
         }
       },
       "post": {
+        "tags": [
+          "ArtworkKeywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -638,6 +831,9 @@
     },
     "/artworkKeywords/{id}": {
       "get": {
+        "tags": [
+          "ArtworkKeywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -660,6 +856,9 @@
         }
       },
       "put": {
+        "tags": [
+          "ArtworkKeywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -667,6 +866,24 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "artworkId": {
+                  "type": "string",
+                  "example": "6ab7527a48f485276c4cea89"
+                },
+                "keywordId": {
+                  "type": "string",
+                  "example": "6ab754b548f485276c4cea9a"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -691,6 +908,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "ArtworkKeywords"
+        ],
         "description": "",
         "parameters": [
           {
@@ -721,6 +941,9 @@
     },
     "/users/": {
       "get": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "responses": {
           "200": {
@@ -737,6 +960,9 @@
     },
     "/users/{id}": {
       "get": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {
@@ -765,6 +991,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {
@@ -772,6 +1001,20 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "example": "admin"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -793,6 +1036,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Users"
+        ],
         "description": "",
         "parameters": [
           {

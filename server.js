@@ -1,8 +1,4 @@
 // Main application entry point.
-// Loads environment variables, configures Express middleware (security,
-// sessions, passport), wires up the route modules, and starts the HTTP
-// server after connecting to MongoDB.
-
 require('dotenv').config();
 
 const express = require('express');
@@ -13,27 +9,25 @@ const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const passport = require('passport');
+const bodyParser = require('body-parser');
 
 const { initDb } = require('./data/database');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
-const routes = require('./routes');
 
-// Registers the GitHub OAuth strategy and user (de)serialization.
+// Register the GitHub OAuth strategy and user (de)serialization.
+// NO definas la estrategia aquí; solo impórtala.
 require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(bodyParser.json());
+
 // ---- Security and request parsing middleware ----
-// helmet: sets secure HTTP headers.
 app.use(helmet());
-// cors: allows cross-origin requests.
 app.use(cors());
-// JSON body parser.
 app.use(express.json());
-// Strips Mongo operator characters ($ and .) from input to prevent injection.
 app.use(sanitize());
-// Rate limiting: max 100 requests per 15 minutes per IP.
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -42,9 +36,8 @@ app.use(
   })
 );
 
-// ---- Sessions and passport (disabled while running tests) ----
+// ---- Sessions and passport ----
 if (process.env.NODE_ENV !== 'test' && process.env.SESSION_SECRET) {
-  // Persist sessions in MongoDB via connect-mongo.
   app.use(
     session({
       secret: process.env.SESSION_SECRET,
@@ -54,22 +47,50 @@ if (process.env.NODE_ENV !== 'test' && process.env.SESSION_SECRET) {
       cookie: { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 1000 },
     })
   );
-  // Restore the logged-in user into req.user on each request.
   app.use(passport.initialize());
   app.use(passport.session());
 }
 
-// ---- Routes ----
-app.use('/', routes);
+// --- CORS headers ---
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Z-Key, Authorization'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+  );
+  next();
+});
+app.use(cors({ methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'] }));
+app.use(cors({ origin: '*' }));
 
-// ---- Central error handling (must be mounted last) ----
+// ---- Routes ----
+app.use('/', require('./routes'));
+
+// --- ROOT ROUTE (login status) ---
+app.get('/', (req, res) => {
+  if (req.user) {
+    const name = req.user.displayName || req.user.username || 'Usuario';
+    res.send(`Logged in as ${name} (Role: ${req.user.role})`);
+  } else {
+    res.send('Logged Out');
+  }
+});
+
+// ---- Error handling ----
+process.on('uncaughtException', (err, origin) => {
+  console.log(
+    process.stderr.fd,
+    `Caught exception: ${err}\n` + `Exception origin: ${origin}`
+  );
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
-/**
- * Connects to MongoDB and starts the HTTP server.
- * Exits the process if the database connection fails.
- */
 async function startServer() {
   try {
     await initDb(process.env.MONGODB_URI);
@@ -83,10 +104,8 @@ async function startServer() {
   }
 }
 
-// Only listen when this file is run directly (not when imported by tests).
 if (require.main === module) {
   startServer();
 }
 
-// Export the app so Jest/Supertest can test it without opening a port.
 module.exports = app;

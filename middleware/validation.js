@@ -63,11 +63,15 @@ function artworkRules() {
   return [
     body('title').trim().notEmpty().withMessage('title is required'),
     body('year')
+      .notEmpty()
+      .withMessage('year is required')
+      .bail()
       .isInt({ min: 1 })
       .withMessage('year must be a positive integer')
-      .bail() // stop checking this field if it is not an integer
+      .bail()
       .custom((value) => value <= new Date().getFullYear())
-      .withMessage('year cannot be in the future'),
+      .withMessage('year cannot be in the future')
+      .toInt(),
     body('period').trim().notEmpty().withMessage('period is required'),
     body('type').trim().notEmpty().withMessage('type is required'),
     body('file').trim().notEmpty().withMessage('file is required'),
