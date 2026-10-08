@@ -51,6 +51,26 @@ if (process.env.NODE_ENV !== 'test' && process.env.SESSION_SECRET) {
   app.use(passport.session());
 }
 
+// ---- Test-only session shim ----
+// In NODE_ENV=test passport/session support is not installed, so
+// req.isAuthenticated/req.user would not exist. This shim recreates them
+// based on the x-test-auth header so Supertest can exercise protected routes
+// without a real OAuth flow. It is never active outside the test environment.
+if (process.env.NODE_ENV === 'test') {
+  app.use((req, res, next) => {
+    const role = req.get('x-test-auth'); // 'admin' | 'user' | absent
+    req.isAuthenticated = () => Boolean(role);
+    if (role) {
+      req.user = {
+        _id: '000000000000000000000001',
+        displayName: 'Test User',
+        role: role === 'admin' ? 'admin' : 'user',
+      };
+    }
+    next();
+  });
+}
+
 // --- CORS headers ---
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

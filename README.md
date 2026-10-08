@@ -248,9 +248,27 @@ generated Swagger doc. Once GitHub is set up in `.env`, you can remove it.
 
 ## Testing
 
-`npm test` runs the Jest + Supertest suite. The tests mock the database module
-(`data/database.js`) so they run without a live MongoDB instance and cover all
-public GET routes plus the auth guard behavior.
+`npm test` runs the Jest + Supertest suite (`tests/server.test.js`). The tests
+mock the database module (`data/database.js`) so they run without a live
+MongoDB instance.
+
+Coverage: **37 tests, all passing**, covering every GET and GetAll route:
+
+| Collection | GetAll | Get by id (200 / 400 / 404) | Extra GETs |
+| --- | --- | --- | --- |
+| artists | ✅ (+`?country=` filter) | ✅ / ✅ / ✅ | `/:id/artworks` |
+| artworks | ✅ | ✅ / ✅ / ✅ | `/:id/keywords`, `/search` (5 cases) |
+| keywords | ✅ | ✅ / ✅ / ✅ | `/:id/artworks` |
+| artwork_keywords | ✅ | ✅ / ✅ / ✅ | — |
+| users (admin) | ✅ (401/403/200) | ✅ / ✅ / ✅ | — |
+| auth | — | — | `/api/auth/me` (401 + 200), `/api/auth/login/failed` |
+| app | — | — | `/`, `/api-docs/` |
+
+In `NODE_ENV=test` passport/session support is disabled, so `server.js`
+installs a small auth shim driven by the `x-test-auth` header
+(`admin` | `user` | absent). Protected routes are tested by sending that
+header (e.g. `.set('x-test-auth', 'admin')`), which keeps the suite free of a
+real OAuth flow while still exercising the 401/403 guards.
 
 ## REST Client
 

@@ -7,11 +7,13 @@ const express = require('express');
 const router = express.Router();
 
 // "Who am I": 200 with the user if logged in, 401 otherwise.
+// Defensive check (same pattern as middleware/auth.js) so the route also
+// works when passport/session support is not installed (e.g. NODE_ENV=test).
 router.get('/me', (req, res) => {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated && req.isAuthenticated()) {
     res.json(req.user);
   } else {
-    res.status(401).json({ message: 'Not authenticated' });
+    res.status(401).json({ authenticated: false, message: 'Not authenticated' });
   }
 });
 
