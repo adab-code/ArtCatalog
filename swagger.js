@@ -40,17 +40,17 @@ const METHOD_ORDER = ["get", "post", "put", "patch", "delete"];
 
 // Build the documentation configuration object dynamically
 const doc = {
+  openapi: "3.0.0", // Tells the parser to use modern OpenAPI 3.0 features
   info: {
     title: "🎨 ArtCatalog REST API Workspace",
     description:
       "CSE 341 Final Project - Art Catalog REST API under OpenAPI 3.0 specification guidelines.",
     version: "1.0.0",
   },
-  // Declaring the tags here is what fixes the group order in Swagger UI.
+  // Declaring the tags here is what fixes the group order in Swagger UI
   tags: TAG_ORDER.map((resource) => ({ name: TAG_NAMES[resource] })),
 
-  // OpenAPI 3.0 uses the servers array instead of host, basePath, and schemes.
-  // This automatically generates a fully working dropdown menu in Swagger UI!
+  // OpenAPI 3.0 native multi-server dropdown selector configuration mapping
   servers: [
     {
       url: "http://localhost:3000/api",
@@ -61,34 +61,22 @@ const doc = {
       description: "Production Web Server (Render)",
     },
   ],
-
-  // OpenAPI 3.0 places security mechanisms inside components.securitySchemes
+  // 1. Tell Swagger UI that endpoints require cookie authentication globally
+  security: [
+    {
+      cookieAuth: [],
+    },
+  ],
+  // 2. Define the exact Cookie-based session authentication scheme
   components: {
     securitySchemes: {
-      githubAuth: {
-        type: "oauth2",
-        description:
-          "Authenticate natively using your GitHub developer credentials application gateway.",
-        flows: {
-          authorizationCode: {
-            // OAS 3.0 natively eliminates the redundant client_secret box from the UI layout!
-            authorizationUrl: "https://github.com",
-            tokenUrl: "http://localhost:3000/api/auth/github/callback",
-            scopes: {
-              "user:email":
-                "Access your public GitHub email address profile properties",
-            },
-          },
-        },
+      cookieAuth: {
+        type: "apiKey",
+        in: "cookie",
+        name: "connect.sid", // Matches the default Express Session cookie identifier
       },
     },
   },
-  // Applies the padlock security requirements globally to all paths
-  security: [
-    {
-      githubAuth: ["user:email"],
-    },
-  ],
 };
 
 // Endpoints that are NOT meant for API consumers: the Swagger UI itself, the
@@ -126,17 +114,9 @@ function tagFor(path) {
  *   methods inside them so /api-docs is not one long "default" blob.
  */
 function cleanDoc(swaggerDoc) {
-  // Dynamically inject the active environmental GITHUB_CLIENT_ID parameters into the OAuth2 schema
-  if (
-    swaggerDoc.components &&
-    swaggerDoc.components.securitySchemes &&
-    swaggerDoc.components.securitySchemes.githubAuth
-  ) {
-    swaggerDoc.components.securitySchemes.githubAuth.flows.authorizationCode.authorizationUrl = `https://github.com?client_id=${process.env.GITHUB_CLIENT_ID}`;
-  }
-
+  // Fix the OpenAPI 3.0 title box placeholder artifacts dynamically
   const paths = swaggerDoc.paths;
-
+  // Dynamically inject the private GITHUB_CLIENT_ID from environmental variables.
   for (const key of Object.keys(paths)) {
     if (REMOVE_PATHS.includes(key)) {
       delete paths[key];

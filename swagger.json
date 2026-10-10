@@ -1117,26 +1117,16 @@
   },
   "components": {
     "securitySchemes": {
-      "githubAuth": {
-        "type": "oauth2",
-        "description": "Authenticate natively using your GitHub developer credentials application gateway.",
-        "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://github.com?client_id=Ov23liHylsokFtsm9d5k",
-            "tokenUrl": "http://localhost:3000/api/auth/github/callback",
-            "scopes": {
-              "user:email": "Access your public GitHub email address profile properties"
-            }
-          }
-        }
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "connect.sid"
       }
     }
   },
   "security": [
     {
-      "githubAuth": [
-        "user:email"
-      ]
+      "cookieAuth": []
     }
   ]
 }
